@@ -9,7 +9,12 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(cors());
+app.use(cors({
+  origin: ["http://localhost:5173", "https://yourfrontenddomain.com"],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true
+}));
 app.use(express.json());
 app.use(express.json({ limit: "100mb" }));
 app.use(express.urlencoded({ limit: "100mb", extended: true }));
@@ -18,7 +23,7 @@ app.use(express.urlencoded({ limit: "100mb", extended: true }));
 connectDB();
 
 app.use("/api/auth", authRoutes);
-app.use('/api/videos', videoRoutes);
+app.use("/api/videos", videoRoutes);
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
