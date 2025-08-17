@@ -8,8 +8,6 @@ cloudinary.config({
 });
 
 export const toggleLike = async (req, res) => {
-  console.log("📌 toggleLike called with params:", req.params);
-  console.log("📌 Authenticated user:", req.user);
   try {
     const { id } = req.params;
     const userId = req.user._id.toString();
@@ -22,10 +20,8 @@ export const toggleLike = async (req, res) => {
     );
 
     if (alreadyLiked) {
-      console.log("📌 Removing like");
       video.likes = video.likes.filter((likeUserId) => likeUserId.toString() !== userId);
     } else {
-      console.log("📌 Adding like");
       video.likes.push(req.user._id);
     }
 
@@ -51,6 +47,11 @@ export const addComment = async (req, res) => {
 
     video.comments.push({user: userId, text});
     await video.save();
+
+    await video.populate({
+      path: "comments.user",
+      select: "name _id"
+    });
 
     res.json({ comment: video.comments });
   } catch (err) {
@@ -86,7 +87,6 @@ export const uploadVideo = async (req, res) => {
       video: newVideo,
     });
   } catch (err) {
-    console.error("❌ Upload error:", err);
     res.status(500).json({ error: err.message || "Unknown server error" });
   }
 };
@@ -100,10 +100,15 @@ export const getVideos = async (req, res) => {
     if (className) filter.className = className;
     if (subject) filter.subject = { $regex: subject, $options: "i" };
 
-    const videos = await Video.find(filter).sort({ createdAt: -1});
-    res.status(200).json(videos);
+    const videos = await Video.find(filter)
+      .sort({ uploadedAt: -1})
+      .populate({path: "comments.user", select: "name _id"});
+    const formattedVideos = videos.map(video => ({
+      ...video._doc,
+      likesCount: video.likes.length
+    }));
+    res.status(200).json(formattedVideos);
   } catch (err) {
-    console.error("❌ Fetch error:", err);
     res.status(500).json({ error: "Failed to fetch videos" });
   }
 };
