@@ -8,7 +8,7 @@ import auth from '../middlewares/auth.js';
 const router = express.Router();
 
 router.post("/upload", isAdmin, upload.single("video"), uploadVideo); 
-router.get("/", getVideos);
+router.get("/", auth, getVideos);
 
 router.post("/:id/like", auth, toggleLike);
 router.post("/:id/comment", auth, addComment);

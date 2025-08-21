@@ -91,7 +91,6 @@ export const uploadVideo = async (req, res) => {
   }
 };
 
-
 export const getVideos = async (req, res) => {
   try {
     const { className, subject } = req.query;
@@ -103,9 +102,15 @@ export const getVideos = async (req, res) => {
     const videos = await Video.find(filter)
       .sort({ uploadedAt: -1})
       .populate({path: "comments.user", select: "name _id"});
+
+      const userId = req.user ? req.user._id.toString() : null; 
+
     const formattedVideos = videos.map(video => ({
       ...video._doc,
-      likesCount: video.likes.length
+      likesCount: video.likes.length,
+      liked: userId
+        ? video.likes.some((id) => id.toString() === userId)
+        : false,
     }));
     res.status(200).json(formattedVideos);
   } catch (err) {
